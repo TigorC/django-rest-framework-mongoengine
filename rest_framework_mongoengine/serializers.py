@@ -17,6 +17,18 @@ from rest_framework_mongoengine.fields import (ReferenceField, ListField, Embedd
 import copy
 
 
+class BaseDocumentSerializer(serializers.ModelSerializer):
+    def _get_default_field_names(self, declared_fields, model_info):
+        """
+        EmbeddedDocuments don't have `id`s so do not include `id` to field names
+        """
+        return (
+            list(declared_fields.keys()) +
+            list(model_info.fields.keys()) +
+            list(model_info.forward_relations.keys())
+        )
+
+
 def raise_errors_on_nested_writes(method_name, serializer, validated_data):
     """
     *** inherited from DRF 3, altered for EmbeddedDocumentSerializer to work automagically ***
@@ -79,7 +91,7 @@ def raise_errors_on_nested_writes(method_name, serializer, validated_data):
     )
 
 
-class DocumentSerializer(serializers.ModelSerializer):
+class DocumentSerializer(BaseDocumentSerializer):
     """
 
     Model Serializer that supports Mongoengine
@@ -484,13 +496,3 @@ class EmbeddedDocumentSerializer(DocumentSerializer):
             setattr(instance, attr, value)
 
         return instance
-
-    def _get_default_field_names(self, declared_fields, model_info):
-        """
-        EmbeddedDocuments don't have `id`s so do not include `id` to field names
-        """
-        return (
-            list(declared_fields.keys()) +
-            list(model_info.fields.keys()) +
-            list(model_info.forward_relations.keys())
-        )
